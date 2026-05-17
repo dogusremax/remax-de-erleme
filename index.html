@@ -963,8 +963,8 @@ CEVABINI SADECE GEÇERLİ BİR JSON OLARAK VER, başka hiçbir şey yazma:
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 4000,
+          temperature: 0.4,
+          maxOutputTokens: 8000,
           responseMimeType: "application/json"
         }
       })
@@ -976,17 +976,44 @@ CEVABINI SADECE GEÇERLİ BİR JSON OLARAK VER, başka hiçbir şey yazma:
     }
 
     const data = await response.json();
+    if (data.error) {
+      throw new Error("API hatası: " + (data.error.message || JSON.stringify(data.error)));
+    }
     let raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    if (!raw) {
+      console.error("AI boş cevap döndü. Tam veri:", data);
+      throw new Error("AI boş cevap döndü. Mülk açıklamasını daha detaylı yazın ve tekrar deneyin.");
+    }
     raw = raw.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
 
     setProgress("Değerleme raporu derleniyor...");
     await sleep(300);
 
     let parsed;
-    try { parsed = JSON.parse(raw); }
-    catch (e) {
-      console.error("JSON parse failed:", raw);
-      throw new Error("Rapor formatı okunamadı. Tekrar deneyin.");
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e1) {
+      // 2. deneme: İçindeki ilk { ... } bloğunu yakala
+      const match = raw.match(/\{[\s\S]*\}/);
+      if (match) {
+        try {
+          parsed = JSON.parse(match[0]);
+        } catch (e2) {
+          // 3. deneme: trailing comma temizle
+          try {
+            const cleaned = match[0].replace(/,(\s*[}\]])/g, "$1");
+            parsed = JSON.parse(cleaned);
+          } catch (e3) {
+            console.error("JSON parse failed. Raw response:", raw);
+            alert("AI cevabı düzgün JSON üretmedi.\n\nİlk 400 karakter:\n\n" + raw.substring(0, 400));
+            throw new Error("Rapor formatı okunamadı. Tekrar deneyin veya daha detaylı mülk bilgisi girin.");
+          }
+        }
+      } else {
+        console.error("JSON bulunamadı:", raw);
+        alert("AI hiç JSON üretmedi.\n\nCevap:\n\n" + raw.substring(0, 400));
+        throw new Error("AI JSON üretmedi. Tekrar deneyin.");
+      }
     }
 
     const report = {
