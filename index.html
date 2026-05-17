@@ -569,10 +569,30 @@ const DEFAULT_ADVISORS = [
 
 // ============ LOCAL STORAGE ============
 function loadAdvisors() {
-  const s = localStorage.getItem("advisors_v1");
-  if (s) return JSON.parse(s);
-  localStorage.setItem("advisors_v1", JSON.stringify(DEFAULT_ADVISORS));
-  return DEFAULT_ADVISORS;
+  // localStorage'da kayıtlı danışmanlar (kişisel foto/telefon korunsun)
+  const saved = localStorage.getItem("advisors_v1");
+  const savedMap = {};
+  if (saved) {
+    try {
+      JSON.parse(saved).forEach(a => { savedMap[a.id] = a; });
+    } catch {}
+  }
+  // DEFAULT sırasını koru, ama kişisel bilgileri kayıttan al
+  const merged = DEFAULT_ADVISORS.map(def => {
+    const userVer = savedMap[def.id];
+    if (userVer) {
+      // Kullanıcı kendi telefonunu/fotoğrafını eklediyse onu koru
+      return {
+        ...def,
+        phone: userVer.phone || def.phone,
+        photo: userVer.photo || def.photo,
+      };
+    }
+    return def;
+  });
+  // Güncel listeyi localStorage'a yaz
+  localStorage.setItem("advisors_v1", JSON.stringify(merged));
+  return merged;
 }
 function saveAdvisors(advs) {
   localStorage.setItem("advisors_v1", JSON.stringify(advs));
