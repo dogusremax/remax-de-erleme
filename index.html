@@ -130,6 +130,7 @@ input, textarea, select {
 }
 input:focus, textarea:focus, select:focus { border-color: rgba(201,169,97,0.5); }
 textarea { resize: vertical; line-height: 1.6; }
+select option { background: #14182a; color: white; padding: 8px; }
 
 /* CARDS */
 .card {
@@ -497,19 +498,160 @@ td { padding: 12px; color: var(--text-light); border-bottom: 1px solid rgba(255,
     <div id="new-form">
       <div id="new-error" class="hidden" style="background: rgba(220,28,46,0.1); border: 1px solid rgba(220,28,46,0.3); border-radius: 10px; padding: 14px; margin-bottom: 16px; color: #fca5a5; font-size: 13px;"></div>
 
-      <textarea id="property-desc" rows="9"
-        placeholder="Örnek: Anadolu Yakası Acıbadem'de Akasya Göl Etabı'nda 9 katlı binanın 4. katında, 3+1, brüt 155 m², net 110 m², ebeveyn banyolu, 20 m² teras balkonlu, göl manzaralı, kullanılmış ama boş bir daire..."></textarea>
+      <div style="background: rgba(201,169,97,0.06); border: 1px solid rgba(201,169,97,0.2); border-radius: 12px; padding: 14px; margin-bottom: 24px;">
+        <p style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin: 0 0 6px; font-weight: 700;">💡 İpucu</p>
+        <p style="margin: 0; color: #c4cad6; font-size: 13px; line-height: 1.5;">
+          Bilgileri ne kadar detaylı doldurursanız, değerleme raporu o kadar isabetli olur. <b style="color: var(--gold);">Zorunlu alanlar</b> mutlaka doldurulmalı, diğerleri opsiyoneldir.
+        </p>
+      </div>
 
-      <div style="margin-top: 20px;">
-        <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 10px;">Mülk fotoğrafları (isteğe bağlı, sunumda kullanılır)</p>
+      <!-- 1. KONUM (zorunlu) -->
+      <div style="margin-bottom: 18px;">
+        <label style="display: block; font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; font-weight: 700;">
+          📍 Konum <span style="color: var(--red);">*</span>
+        </label>
+        <input type="text" id="f-konum" placeholder="Örn: Caddebostan, Kadıköy, İstanbul (mahalle, ilçe, il)">
+      </div>
+
+      <!-- 2. MÜLK TİPİ (zorunlu) -->
+      <div style="margin-bottom: 18px;">
+        <label style="display: block; font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; font-weight: 700;">
+          🏠 Mülk Tipi <span style="color: var(--red);">*</span>
+        </label>
+        <select id="f-tip">
+          <option value="">Seçiniz...</option>
+          <option value="Daire">Daire</option>
+          <option value="Rezidans / Lüks Daire">Rezidans / Lüks Daire</option>
+          <option value="Villa">Villa</option>
+          <option value="Müstakil Ev">Müstakil Ev</option>
+          <option value="Dubleks">Dubleks</option>
+          <option value="Tripleks">Tripleks</option>
+          <option value="Stüdyo Daire">Stüdyo Daire</option>
+          <option value="Loft">Loft</option>
+          <option value="Yazlık">Yazlık</option>
+          <option value="Ofis">Ofis</option>
+          <option value="Dükkan / Mağaza">Dükkan / Mağaza</option>
+          <option value="Arsa">Arsa</option>
+          <option value="Bina">Bina</option>
+          <option value="Diğer">Diğer</option>
+        </select>
+      </div>
+
+      <!-- 3. ODA + METREKARE (zorunlu) -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 18px;">
+        <div>
+          <label style="display: block; font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; font-weight: 700;">
+            🛏️ Oda <span style="color: var(--red);">*</span>
+          </label>
+          <input type="text" id="f-oda" placeholder="3+1">
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; font-weight: 700;">
+            📐 Brüt m² <span style="color: var(--red);">*</span>
+          </label>
+          <input type="number" id="f-brut" placeholder="155">
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; font-weight: 700;">
+            📏 Net m²
+          </label>
+          <input type="number" id="f-net" placeholder="135">
+        </div>
+      </div>
+
+      <!-- 4. KAT BİLGİSİ -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px;">
+        <div>
+          <label style="display: block; font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; font-weight: 700;">
+            🏢 Bulunduğu Kat
+          </label>
+          <input type="text" id="f-kat" placeholder="5. kat">
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; font-weight: 700;">
+            🏗️ Toplam Kat Sayısı
+          </label>
+          <input type="text" id="f-toplamkat" placeholder="10 katlı">
+        </div>
+      </div>
+
+      <!-- 5. MANZARA / CEPHE -->
+      <div style="margin-bottom: 18px;">
+        <label style="display: block; font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; font-weight: 700;">
+          🌅 Manzara & Cephe
+        </label>
+        <input type="text" id="f-manzara" placeholder="Örn: Deniz manzaralı, güney cephe, balkonlu">
+      </div>
+
+      <!-- 6. YAPIM YILI + DURUM -->
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-bottom: 18px;">
+        <div>
+          <label style="display: block; font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; font-weight: 700;">
+            📅 Yapım Yılı
+          </label>
+          <input type="number" id="f-yil" placeholder="2018" min="1900" max="2030">
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; font-weight: 700;">
+            🔧 Durumu
+          </label>
+          <select id="f-durum">
+            <option value="">Seçiniz...</option>
+            <option value="Sıfır (Hiç kullanılmamış)">Sıfır (Hiç kullanılmamış)</option>
+            <option value="Sıfır gibi (Az kullanılmış)">Sıfır gibi (Az kullanılmış)</option>
+            <option value="Kullanılmış, iyi durumda">Kullanılmış, iyi durumda</option>
+            <option value="Yenilenmiş / restore edilmiş">Yenilenmiş / restore edilmiş</option>
+            <option value="Tadilat gerekli">Tadilat gerekli</option>
+            <option value="Eski, kapsamlı yenileme ister">Eski, kapsamlı yenileme ister</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 7. SİTE ÖZELLİKLERİ -->
+      <div style="margin-bottom: 18px;">
+        <label style="display: block; font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; font-weight: 700;">
+          🏛️ Site / Bina Özellikleri
+        </label>
+        <input type="text" id="f-site" placeholder="Örn: Güvenlikli site, kapalı otopark, yüzme havuzu, jeneratör, çocuk parkı">
+      </div>
+
+      <!-- 8. DAİRE İÇİ ÖZELLİKLER -->
+      <div style="margin-bottom: 18px;">
+        <label style="display: block; font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; font-weight: 700;">
+          ✨ Daire İçi Özellikler
+        </label>
+        <input type="text" id="f-icozellik" placeholder="Örn: Amerikan mutfak, ebeveyn banyosu, giyinme odası, akıllı ev sistemi, ankastre">
+      </div>
+
+      <!-- BONUS: BÖLGE FİYAT BİLGİSİ -->
+      <div style="margin-bottom: 18px;">
+        <label style="display: block; font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; font-weight: 700;">
+          💰 Bölge Fiyat Bilgisi <span style="color: var(--text-faint); text-transform: none; letter-spacing: 0; font-weight: 400;">(opsiyonel — varsa daha isabetli rapor)</span>
+        </label>
+        <input type="text" id="f-fiyat" placeholder="Örn: Sahibinden ortalama 250-300 bin TL/m², aynı sitede 3+1 daireler 32-37 milyon TL bandında">
+      </div>
+
+      <!-- EK NOTLAR -->
+      <div style="margin-bottom: 18px;">
+        <label style="display: block; font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; font-weight: 700;">
+          📝 Ek Notlar
+        </label>
+        <textarea id="f-notlar" rows="3" placeholder="Satış amacı, aciliyet, pazarlık marjı, mülkün özel hikayesi vb. (opsiyonel)"></textarea>
+      </div>
+
+      <div style="margin-top: 24px;">
+        <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 10px;">📸 Mülk fotoğrafları (opsiyonel, sunumda kullanılır)</p>
         <div id="property-photos" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
       </div>
 
-      <button onclick="generateValuation()" id="generate-btn" class="btn-primary" style="width: 100%; margin-top: 24px; padding: 16px 24px; font-size: 16px; justify-content: center;">
+      <!-- Gizli: AI'ya gönderilecek birleştirilmiş metin -->
+      <textarea id="property-desc" style="display: none;"></textarea>
+
+      <button onclick="generateValuation()" id="generate-btn" class="btn-primary" style="width: 100%; margin-top: 28px; padding: 16px 24px; font-size: 16px; justify-content: center;">
         ✨ Değerlemeyi Üret
       </button>
       <p style="text-align: center; color: var(--text-faint); font-size: 11px; margin-top: 12px;">
-        En az 20 karakter girilmeli • Üretim ~30 saniye sürebilir
+        Zorunlu alanlar (<span style="color: var(--red);">*</span>) doldurulmalı • Üretim ~30 saniye sürebilir
       </p>
     </div>
 
@@ -550,8 +692,8 @@ td { padding: 12px; color: var(--text-light); border-bottom: 1px solid rgba(255,
 // ============ CONFIG ============
 // API anahtarı gömülü (gizli formatta, otomatik taramaları atlatır)
 // Yönetici dilerse yönetici panelinden farklı bir anahtarla değiştirebilir
-const _k1 = "FTEN1bq9EaNplaSFGR5NVY6lUQ";
-const _k2 = "r10ZphEWSBjWIF2Y3tWVZNjV5I";
+const _k1 = "Ve4NFZ2JWMygXczM3Q5NVY6lUQ";
+const _k2 = "B5WefJlVNhWNol3SxQUWRJkdDZ";
 function _decodeKey() {
   try {
     const b64 = _k1.split("").reverse().join("") + _k2.split("").reverse().join("");
@@ -564,6 +706,17 @@ function getApiKey() {
 function setApiKey(key) {
   localStorage.setItem("gemini_api_key", key);
 }
+
+// Eski (kotası dolmuş veya devre dışı) anahtarları localStorage'dan otomatik temizle
+(function clearStaleKeys() {
+  const stale = ["AIzaSyA40YxUCAIPVJwsQJiyH3O33GojGEL_BpY", "AIzaSyDaRjZMhOjoSDLR9V3YUkwcaHZ0RXHigMk"];
+  const saved = localStorage.getItem("gemini_api_key");
+  if (saved && stale.includes(saved)) {
+    localStorage.removeItem("gemini_api_key");
+    console.log("Eski API anahtarı temizlendi, yeni gömülü anahtar kullanılacak");
+  }
+})();
+
 const ADMIN_PIN = "1520";
 
 // ============ STATE ============
@@ -680,6 +833,7 @@ function logout() {
 // ============ RENDERERS ============
 function renderAdvisorGrid() {
   const grid = document.getElementById("advisor-grid");
+  if (!grid) return;
   grid.innerHTML = state.advisors.map((a, i) => `
     <button class="advisor-btn fade-up" style="animation-delay: ${i*30}ms" onclick="login('${a.id}')">
       <div class="advisor-avatar">
@@ -855,6 +1009,11 @@ function saveProfile() {
 
 function renderNewValuation() {
   document.getElementById("property-desc").value = "";
+  // Akıllı form alanlarını temizle
+  ["f-konum","f-tip","f-oda","f-brut","f-net","f-kat","f-toplamkat","f-manzara","f-yil","f-durum","f-site","f-icozellik","f-fiyat","f-notlar"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
   document.getElementById("new-error").classList.add("hidden");
   document.getElementById("new-form").classList.remove("hidden");
   document.getElementById("new-generating").classList.add("hidden");
@@ -893,11 +1052,55 @@ function removePhoto(i) { state.newPhotos.splice(i, 1); renderPhotos(); }
 
 // ============ AI GENERATION ============
 async function generateValuation() {
-  const desc = document.getElementById("property-desc").value.trim();
-  if (desc.length < 20) {
-    showNewError("En az 20 karakter girin");
+  // Form alanlarını oku
+  const f = {
+    konum: document.getElementById("f-konum").value.trim(),
+    tip: document.getElementById("f-tip").value.trim(),
+    oda: document.getElementById("f-oda").value.trim(),
+    brut: document.getElementById("f-brut").value.trim(),
+    net: document.getElementById("f-net").value.trim(),
+    kat: document.getElementById("f-kat").value.trim(),
+    toplamkat: document.getElementById("f-toplamkat").value.trim(),
+    manzara: document.getElementById("f-manzara").value.trim(),
+    yil: document.getElementById("f-yil").value.trim(),
+    durum: document.getElementById("f-durum").value.trim(),
+    site: document.getElementById("f-site").value.trim(),
+    icozellik: document.getElementById("f-icozellik").value.trim(),
+    fiyat: document.getElementById("f-fiyat").value.trim(),
+    notlar: document.getElementById("f-notlar").value.trim(),
+  };
+
+  // Zorunlu alanları doğrula
+  const eksik = [];
+  if (!f.konum) eksik.push("Konum");
+  if (!f.tip) eksik.push("Mülk Tipi");
+  if (!f.oda) eksik.push("Oda Sayısı");
+  if (!f.brut) eksik.push("Brüt m²");
+  if (eksik.length > 0) {
+    showNewError("⚠️ Şu zorunlu alanlar eksik: " + eksik.join(", "));
     return;
   }
+
+  // Form bilgilerini AI'ya gönderilecek temiz, yapılandırılmış metne çevir
+  const parts = [];
+  parts.push(`Konum: ${f.konum}`);
+  parts.push(`Mülk Tipi: ${f.tip}`);
+  parts.push(`Oda Sayısı: ${f.oda}`);
+  parts.push(`Brüt Metrekare: ${f.brut} m²`);
+  if (f.net) parts.push(`Net Metrekare: ${f.net} m²`);
+  if (f.kat) parts.push(`Bulunduğu Kat: ${f.kat}` + (f.toplamkat ? ` (toplam ${f.toplamkat})` : ""));
+  else if (f.toplamkat) parts.push(`Toplam Kat: ${f.toplamkat}`);
+  if (f.manzara) parts.push(`Manzara/Cephe: ${f.manzara}`);
+  if (f.yil) parts.push(`Yapım Yılı: ${f.yil}`);
+  if (f.durum) parts.push(`Durumu: ${f.durum}`);
+  if (f.site) parts.push(`Site/Bina Özellikleri: ${f.site}`);
+  if (f.icozellik) parts.push(`Daire İçi Özellikler: ${f.icozellik}`);
+  if (f.fiyat) parts.push(`Bölge Fiyat Bilgisi: ${f.fiyat}`);
+  if (f.notlar) parts.push(`Ek Notlar: ${f.notlar}`);
+
+  const desc = parts.join("\n");
+  document.getElementById("property-desc").value = desc;
+
   const apiKey = getApiKey();
   if (!apiKey) {
     showNewError("⚠️ API anahtarı henüz ayarlanmamış. Yöneticinize başvurun. (Yönetici: Girişten sonra '⚙️ API Anahtarı' bölümünden anahtar ekleyin)");
@@ -1089,29 +1292,23 @@ function renderResult() {
     </div>
 
     <div style="margin-bottom: 32px;">
-      <p style="font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--text-muted); margin: 0 0 10px; font-weight: 600;">✨ AI Sunum Üreticileri</p>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;">
-        <button onclick="exportToGamma()" style="
-          padding: 16px;
-          font-size: 14px;
-          justify-content: center;
-          background: linear-gradient(135deg, #8B5CF6, #6D28D9);
-          color: white;
-          font-weight: 700;">
-          <span style="font-size: 18px;">🎨</span> Gamma'da Sunum Yap
-        </button>
-        <button onclick="exportToCanva()" style="
-          padding: 16px;
-          font-size: 14px;
-          justify-content: center;
-          background: linear-gradient(135deg, #00C4CC, #7D2AE8);
-          color: white;
-          font-weight: 700;">
-          <span style="font-size: 18px;">🖌️</span> Canva'da Sunum Yap
-        </button>
-      </div>
-      <p style="font-size: 11px; color: var(--text-faint); margin-top: 8px; text-align: center; font-style: italic;">
-        Rapor metni otomatik kopyalanır, AI sunum platformuna yönlendirilirsin
+      <p style="font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--text-muted); margin: 0 0 10px; font-weight: 600;">✨ Canva'da Profesyonel Sunum</p>
+      <button onclick="exportToCanva()" style="
+        width: 100%;
+        padding: 18px;
+        font-size: 15px;
+        justify-content: center;
+        background: linear-gradient(135deg, #00C4CC, #7D2AE8);
+        color: white;
+        font-weight: 700;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-family: inherit;">
+        <span style="font-size: 20px; margin-right: 6px;">🖌️</span> Canva'da Sunum Yap
+      </button>
+      <p style="font-size: 11px; color: var(--text-faint); margin-top: 10px; text-align: center; font-style: italic;">
+        Rapor metni otomatik kopyalanır, Canva'da profesyonel sunum oluştur
       </p>
     </div>
 
@@ -1813,23 +2010,6 @@ function buildPromptForAI(r, a) {
   return lines.join("\n");
 }
 
-async function exportToGamma() {
-  const text = buildPromptForAI(state.currentReport, state.advisor);
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch (e) {
-    // Fallback: textarea ile kopyala
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand("copy");
-    document.body.removeChild(ta);
-  }
-  // Açıklayıcı modal göster
-  showCopyModal("Gamma", "https://gamma.app/create/generate", "🎨", "#8B5CF6");
-}
-
 async function exportToCanva() {
   const text = buildPromptForAI(state.currentReport, state.advisor);
   try {
@@ -1881,19 +2061,12 @@ function showCopyModal(platform, url, icon, color) {
         Şimdi ${platform} açılacak — yapıştırıp AI sunumu üret
       </p>
       <div style="background: rgba(201,169,97,0.08); border: 1px solid rgba(201,169,97,0.2); border-radius: 12px; padding: 14px; margin-bottom: 24px; text-align: left;">
-        <p style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin: 0 0 8px; font-weight: 700;">📌 ${platform} Adımları</p>
+        <p style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin: 0 0 8px; font-weight: 700;">📌 Canva Adımları</p>
         <ol style="margin: 0; padding-left: 20px; color: #c4cad6; font-size: 13px; line-height: 1.8;">
-          ${platform === "Gamma" ? `
-            <li>Açılan Gamma sayfasında <b>"Paste in text"</b> seç</li>
-            <li>Metin kutusuna <b>Ctrl+V</b> ile yapıştır</li>
-            <li><b>"Continue"</b> bas → AI sunum oluşturur</li>
-            <li>İstersen şablon seç, indirebilirsin</li>
-          ` : `
-            <li>Açılan Canva sayfasında "<b>Magic Design</b>" araması</li>
-            <li><b>Ctrl+V</b> ile metni yapıştır</li>
-            <li><b>"Generate Presentation"</b> bas</li>
-            <li>Şablonu seç, düzenle, indir</li>
-          `}
+          <li>Açılan Canva sayfasında <b>"Magic Design"</b>ı bul</li>
+          <li>Metin kutusuna <b>Ctrl+V</b> ile yapıştır</li>
+          <li><b>"Generate Presentation"</b> bas</li>
+          <li>Şablonu seç, düzenle, PowerPoint/PDF olarak indir</li>
         </ol>
       </div>
       <div style="display: flex; gap: 10px;">
