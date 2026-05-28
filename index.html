@@ -552,7 +552,7 @@ td { padding: 12px; color: var(--text-light); border-bottom: 1px solid rgba(255,
         display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;
         font-size: 28px; animation: pulse 1.5s ease-in-out infinite;">🪄</div>
       <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; font-family: 'Playfair Display', serif;">
-        Değerleme Hazırlanıyor
+        Doğuş Senin İçin Çalışıyor
       </div>
       <div id="progress-text" style="color: var(--text-muted); font-size: 14px;">Başlatılıyor...</div>
       <div class="progress-bar" style="margin-top: 24px;"></div>
@@ -1249,11 +1249,11 @@ async function generateValuation() {
 
   document.getElementById("new-form").classList.add("hidden");
   document.getElementById("new-generating").classList.remove("hidden");
-  setProgress("Mülk bilgileri analiz ediliyor...");
+  setProgress("Doğuş senin için verileri inceliyor...");
 
   try {
     await sleep(400);
-    setProgress("Yapay zeka emsal araştırması yapıyor...");
+    setProgress("Doğuş senin için piyasayı araştırıyor. Biraz beklersen fark yaratacaksın...");
 
     const prompt = `Sen profesyonel bir gayrimenkul değerleme uzmanısın. RE/MAX Doğuş danışmanı için detaylı bir değerleme raporu hazırlayacaksın.
 
@@ -1329,7 +1329,7 @@ CEVABINI SADECE GEÇERLİ BİR JSON OLARAK VER, başka hiçbir şey yazma:
     }
     raw = raw.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
 
-    setProgress("Değerleme raporu derleniyor...");
+    setProgress("Doğuş raporunu profesyonelce hazırlıyor...");
     await sleep(300);
 
     let parsed;
@@ -1368,7 +1368,7 @@ CEVABINI SADECE GEÇERLİ BİR JSON OLARAK VER, başka hiçbir şey yazma:
       ...parsed
     };
 
-    setProgress("Hazır!");
+    setProgress("Rapor hazır! ✨");
     await sleep(300);
 
     state.reports.unshift(report);
