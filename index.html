@@ -1027,104 +1027,98 @@ async function sendChatMessage() {
     return;
   }
 
-  // AI'dan akıllı ayrıştırma iste (kullanıcının tek mesajından birden fazla alanı çekebilir)
-  await parseChatWithAI(text, currentField);
+  // Yerel akıllı ayrıştırma (API kotası harcamaz!)
+  parseChatLocal(text, currentField);
   updateProgressBadges();
   updateGenerateButton();
   setTimeout(() => askNextQuestion(), 400);
 }
 
-async function parseChatWithAI(userText, currentField) {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    // API yoksa basit atama yap
-    state.chatData[currentField.key] = userText;
+// AI kullanmadan basit ama akıllı ayrıştırıcı - API kotası harcamaz
+function parseChatLocal(userText, currentField) {
+  const t = userText.trim();
+  if (!t) return;
+
+  // Brüt m² için sadece sayıyı ayıkla (örn "155 m²" -> "155")
+  if (currentField.key === "brut") {
+    const m = t.match(/(\d+)/);
+    state.chatData.brut = m ? m[1] : t;
+    // Aynı mesajda başka şey de varsa onları da yakalamaya çalış
+    detectExtra(t);
     return;
   }
 
-  // AI'ya: "Kullanıcı şunu yazdı, bilgileri JSON olarak ayrıştır"
-  const fieldList = CHAT_FIELDS.map(f => `- ${f.key}: ${f.label} (örn: ${f.examples})`).join("\n");
-  const existingData = JSON.stringify(state.chatData);
+  // Yıl + durum birlikte
+  if (currentField.key === "yil_durum") {
+    const yearMatch = t.match(/(19|20)\d{2}/);
+    if (yearMatch) state.chatData.yil = yearMatch[0];
+    state.chatData.durum = t;
+    state.chatData.yil_durum = t;
+    return;
+  }
 
-  const prompt = `Bir gayrimenkul değerleme asistanısın. Danışman bir mesaj yazdı, bu mesajdan mülk bilgilerini ayrıştır ve JSON olarak ver.
+  // Kat bilgisi (kat + manzara birlikte gelebilir)
+  if (currentField.key === "kat") {
+    state.chatData.kat = t;
+    // Manzara da yazmışsa
+    if (/manzara|deniz|orman|göl|sahil|park|cephe/i.test(t)) {
+      state.chatData.manzara = t;
+    }
+    // Toplam kat varsa
+    const toplam = t.match(/(\d+)\s*kat/i);
+    if (toplam) state.chatData.toplamkat = toplam[0];
+    return;
+  }
 
-Şu anki soru: "${currentField.label}"
-Daha önce alınan bilgiler: ${existingData}
+  // Özellikler (site + iç özellikler birlikte)
+  if (currentField.key === "ozellikler") {
+    state.chatData.ozellikler = t;
+    state.chatData.site = t;
+    state.chatData.icozellik = t;
+    return;
+  }
 
-Danışmanın yeni mesajı: "${userText}"
+  // Ekstra notlar (serbest)
+  if (currentField.key === "ekstra") {
+    state.chatData.ekstra = t;
+    state.chatData.notlar = t;
+    state.chatData.serbest = t;
+    return;
+  }
 
-Çıkarılabilecek alanlar:
-${fieldList}
+  // Diğer alanlar - direkt ata
+  state.chatData[currentField.key] = t;
 
-Kullanıcı tek mesajda birden fazla bilgi vermiş olabilir. Tümünü ayrıştır.
-Sayısal değerleri olduğu gibi koru (örn: brut için "155" yaz, "155 m²" yazma).
-Eğer kullanıcı "atla" tarzı bir şey yazdıysa o alanı boş bırak.
-Sadece JSON döndür, başka metin yazma.
-
-Format:
-{
-  "konum": "...",
-  "tip": "...",
-  "oda": "...",
-  "brut": "...",
-  "kat": "...",
-  "yil_durum": "...",
-  "ozellikler": "...",
-  "ekstra": "..."
+  // Tek mesajda ekstra bilgi yakalama
+  detectExtra(t);
 }
 
-Boş bırakmak istediğin alanları çıkar. Sadece doldurduğun alanları döndür.`;
-
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 500, responseMimeType: "application/json" }
-      })
-    });
-    if (!r.ok) {
-      // API hatası varsa basit ata
-      state.chatData[currentField.key] = userText;
-      return;
-    }
-    const data = await r.json();
-    let raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-    raw = raw.trim().replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
-    const parsed = JSON.parse(raw);
-
-    // Birden fazla alan dolduysa hepsini sakla + ham mapping
-    // chatData'ya yerleştir (yıl_durum → yil/durum, kat → kat/toplamkat/manzara vs.)
-    Object.keys(parsed).forEach(k => {
-      if (parsed[k] && parsed[k].trim()) {
-        state.chatData[k] = parsed[k].trim();
-      }
-    });
-    // generateValuation için brut/oda/tip/konum doğrudan, diğerleri serbest metin
-    // Akıllı dönüşüm:
-    if (parsed.kat) {
-      state.chatData.kat = parsed.kat;
-    }
-    if (parsed.yil_durum) {
-      // "2019, kullanılmış" -> ayrıştır
-      const m = parsed.yil_durum.match(/(\d{4})/);
-      if (m) state.chatData.yil = m[1];
-      state.chatData.durum = parsed.yil_durum;
-    }
-    if (parsed.ozellikler) {
-      state.chatData.site = parsed.ozellikler;
-      state.chatData.icozellik = parsed.ozellikler;
-    }
-    if (parsed.ekstra) {
-      state.chatData.notlar = parsed.ekstra;
-      state.chatData.serbest = parsed.ekstra;
-    }
-  } catch (e) {
-    console.error("Chat parse error:", e);
-    // Hata olursa direkt ata
-    state.chatData[currentField.key] = userText;
+// Mesajda başka alanların verilerini yakalamaya çalış (akıllı ekstra)
+function detectExtra(text) {
+  // Brüt m² yazılmış mı? (155 m², 200m2, vs.)
+  if (!state.chatData.brut) {
+    const m = text.match(/(\d{2,4})\s*(m²|m2|metre|metrekare)/i);
+    if (m) state.chatData.brut = m[1];
+  }
+  // Oda sayısı? (3+1, 2+1, vs.)
+  if (!state.chatData.oda) {
+    const m = text.match(/(\d\+\d|stüdyo)/i);
+    if (m) state.chatData.oda = m[0];
+  }
+  // Kat?
+  if (!state.chatData.kat) {
+    const m = text.match(/(\d+)\.?\s*kat/i);
+    if (m) state.chatData.kat = m[0];
+  }
+  // Yıl?
+  if (!state.chatData.yil) {
+    const m = text.match(/(19|20)\d{2}/);
+    if (m) state.chatData.yil = m[0];
+  }
+  // Manzara
+  if (!state.chatData.manzara && /deniz manzaralı|orman manzaralı|göl manzaralı|sahil/i.test(text)) {
+    const m = text.match(/(deniz manzaralı|orman manzaralı|göl manzaralı|sahil)/i);
+    if (m) state.chatData.manzara = m[0];
   }
 }
 
