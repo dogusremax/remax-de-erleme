@@ -1294,21 +1294,47 @@ CEVABINI SADECE GEÇERLİ BİR JSON OLARAK VER, başka hiçbir şey yazma:
 İstanbul piyasasına uygun rakamlar kullan. Acıbadem/Üsküdar/Kadıköy 80-250K TL/m². valueFactors 4-6 adet, comparables 4-6 adet.`;
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 8000,
-          responseMimeType: "application/json"
-        }
-      })
-    });
+
+    // Otomatik tekrar deneme: 503 (yoğunluk) veya 429 (rate limit) hatalarında 3 kez dene
+    let response;
+    let lastError;
+    const maxRetries = 3;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      if (attempt > 1) {
+        setProgress(`Doğuş bir kez daha deniyor... (${attempt}. deneme)`);
+        await sleep(2500); // 2.5 saniye bekle
+      }
+      response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 8000,
+            responseMimeType: "application/json"
+          }
+        })
+      });
+
+      // Başarılı veya kalıcı hata (4xx auth, vs.) → çık
+      if (response.ok) break;
+      if (response.status !== 503 && response.status !== 429 && response.status < 500) {
+        break; // Geçici olmayan hata, denemeye devam etme
+      }
+      lastError = response.status;
+      console.warn(`API ${response.status} hatası, ${attempt}/${maxRetries} deneme`);
+    }
 
     if (!response.ok) {
       const errText = await response.text();
+      // Anlaşılır Türkçe hata mesajları
+      if (response.status === 503) {
+        throw new Error("Google'ın sunucuları şu an çok yoğun. 1-2 dakika sonra tekrar deneyin. (Bu geçici bir durumdur, kotanız değil)");
+      }
+      if (response.status === 429) {
+        throw new Error("Günlük kota doldu. Yarın sabah 10:00'da sıfırlanacak veya yöneticiniz prepay yatırarak çözebilir.");
+      }
       throw new Error(`API hatası ${response.status}: ${errText.substring(0,200)}`);
     }
 
