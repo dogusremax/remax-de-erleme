@@ -2287,7 +2287,7 @@ async function generatePPTX(report, advisor) {
 
   function addLogo(slide) {
     slide.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 11.35, y: 0.28, w: 1.78, h: 0.96, rectRadius: 0.08, fill: { color: "0A0E1A" }, line: { color: "243049", width: 0.75 } });
-    try { slide.addImage({ data: DOGUS_LOGO_B64, x: 11.55, y: 0.42, w: 1.38, h: 0.69 }); } catch (e) {}
+    try { slide.addImage({ data: DOGUS_LOGO_B64, x: 11.55, y: 0.42, w: 1.38, h: 0.69 }); } catch(e){ console.warn('Sessiz hata:', e); }
   }
 
   // Cover
