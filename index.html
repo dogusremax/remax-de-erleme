@@ -539,6 +539,20 @@ td { padding: 12px; color: var(--text-light); border-bottom: 1px solid rgba(255,
         <div id="property-photos" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
       </div>
 
+      <!-- Mevcut Emsaller alanı -->
+      <div style="margin-top: 22px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 18px;">
+        <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px;">🏘️ Mevcut Emsaller (opsiyonel, önerilir)</p>
+        <p style="color: var(--text-faint); font-size: 11px; margin-bottom: 12px; line-height:1.5;">Bölgedeki benzer satılık ilanları ekleyin — değerleme daha isabetli olur ve rapora emsal tablosu girer.</p>
+        <div id="comps-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;"></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <input id="comp-fiyat" type="text" inputmode="numeric" placeholder="Fiyat (TL)" style="padding:10px 12px; font-size:13px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px;">
+          <input id="comp-ozellik" type="text" placeholder="Özellik (3+1, 140m², 5.kat)" style="padding:10px 12px; font-size:13px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px;">
+          <input id="comp-sure" type="text" placeholder="Satışta süre (ör. 45 gün)" style="padding:10px 12px; font-size:13px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px;">
+          <button type="button" onclick="addComp()" class="btn-secondary" style="padding:10px; font-size:13px; justify-content:center;">+ Emsal Ekle</button>
+        </div>
+      </div>
+
+
       <!-- Gizli: AI'ya gönderilecek birleştirilmiş metin -->
       <textarea id="property-desc" style="display: none;"></textarea>
 
@@ -660,6 +674,7 @@ let state = {
   currentReport: null,
   currentSlide: 0,
   newPhotos: [],
+  manualComps: [],
   chatData: {},
   chatStep: 0,
   chatMessages: [],
@@ -946,6 +961,8 @@ function renderNewValuation() {
   document.getElementById("new-generating").classList.add("hidden");
   state.newPhotos = [];
   renderPhotos();
+  state.manualComps = [];
+  renderComps();
   // Sohbeti sıfırla ve başlat
   startChat();
 }
@@ -953,6 +970,9 @@ function renderNewValuation() {
 // ============ SOHBET SİHİRBAZI ============
 // Sohbet sırası - sırayla soracağı bilgiler
 const CHAT_FIELDS = [
+  { key: "musteri", label: "Müşteri", required: false, icon: "👤",
+    question: "Bu değerleme <b>hangi müşteri</b> için? (Rapor kapağına yazılacak — istersen 'geç' de)",
+    examples: "Ahmet Yılmaz / Boş bırakmak için 'geç'" },
   { key: "konum", label: "Konum", required: true, icon: "📍",
     question: "Mülkün <b>konumunu</b> öğrenebilir miyim? Mahalle, ilçe ve il olarak yazabilirsin.",
     examples: "Caddebostan, Kadıköy, İstanbul" },
@@ -1121,6 +1141,12 @@ function parseChatLocal(userText, currentField) {
     return;
   }
 
+  // Müşteri adı - direkt ata, ekstra ayrıştırma yapma (isim yanlış yorumlanmasın)
+  if (currentField.key === "musteri") {
+    state.chatData.musteri = t;
+    return;
+  }
+
   // Diğer alanlar - direkt ata
   state.chatData[currentField.key] = t;
 
@@ -1232,6 +1258,47 @@ function handlePropertyPhotos(e) {
 }
 function removePhoto(i) { state.newPhotos.splice(i, 1); renderPhotos(); }
 
+// ============ MEVCUT EMSALLER (manuel giriş) ============
+function renderComps() {
+  const container = document.getElementById("comps-list");
+  if (!container) return;
+  if (!state.manualComps.length) {
+    container.innerHTML = `<p style="color:var(--text-faint); font-size:11px; font-style:italic;">Henüz emsal eklenmedi.</p>`;
+    return;
+  }
+  container.innerHTML = state.manualComps.map((c, i) => `
+    <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(201,169,97,0.15); border-radius:8px; padding:10px 12px;">
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:14px; font-weight:700; color:var(--gold,#C9A961);">${fmtTL(c.fiyat)}</div>
+        <div style="font-size:12px; color:#C4CAD6;">${escapeHtml(c.ozellik || "")}${c.sure ? ` · <span style="color:var(--text-muted);">${escapeHtml(c.sure)} satışta</span>` : ""}</div>
+      </div>
+      <button type="button" onclick="removeComp(${i})" style="width:24px; height:24px; border-radius:50%; background:rgba(220,28,46,0.15); color:#fca5a5; padding:0; font-size:12px; justify-content:center; flex-shrink:0;">✕</button>
+    </div>
+  `).join("");
+}
+function addComp() {
+  const fiyat = document.getElementById("comp-fiyat").value.trim();
+  const ozellik = document.getElementById("comp-ozellik").value.trim();
+  const sure = document.getElementById("comp-sure").value.trim();
+  if (!fiyat && !ozellik) { alert("En az fiyat veya özellik girin."); return; }
+  state.manualComps.push({ fiyat, ozellik, sure });
+  document.getElementById("comp-fiyat").value = "";
+  document.getElementById("comp-ozellik").value = "";
+  document.getElementById("comp-sure").value = "";
+  renderComps();
+  document.getElementById("comp-fiyat").focus();
+}
+function removeComp(i) { state.manualComps.splice(i, 1); renderComps(); }
+// TL biçimlendirme (12500000 -> 12.500.000 TL)
+function fmtTL(v) {
+  const n = String(v || "").replace(/[^\d]/g, "");
+  if (!n) return String(v || "");
+  return Number(n).toLocaleString("tr-TR") + " TL";
+}
+function escapeHtml(s) {
+  return String(s || "").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+}
+
 // ============ AI GENERATION ============
 async function generateValuation() {
   // Sohbet verilerinden yapılandırılmış mülk bilgisini oluştur
@@ -1270,6 +1337,14 @@ async function generateValuation() {
   const desc = parts.join("\n");
   document.getElementById("property-desc").value = desc;
 
+  // Danışmanın girdiği gerçek emsaller (varsa) — AI'ya güçlü sinyal
+  const manualComps = (state.manualComps || []).filter(c => c.fiyat || c.ozellik);
+  let compsText = "";
+  if (manualComps.length) {
+    compsText = "\n\nDANIŞMANIN GİRDİĞİ GERÇEK EMSALLER (bölgeden, bunları dikkate al ve değerlemeyi bunlarla tutarlı yap):\n" +
+      manualComps.map((c, i) => `${i+1}. Fiyat: ${fmtTL(c.fiyat)}${c.ozellik ? ` | Özellik: ${c.ozellik}` : ""}${c.sure ? ` | Satışta: ${c.sure}` : ""}`).join("\n");
+  }
+
   const apiKey = getApiKey();
   if (!apiKey) {
     showNewError("⚠️ API anahtarı henüz ayarlanmamış. Yöneticinize başvurun. (Yönetici: Girişten sonra '⚙️ API Anahtarı' bölümünden anahtar ekleyin)");
@@ -1288,7 +1363,7 @@ async function generateValuation() {
 
 MÜLK BİLGİLERİ:
 """
-${desc}
+${desc}${compsText}
 """
 
 Mayıs 2026 İstanbul piyasası koşullarını dikkate al (USD/TRY ~45, faiz %37, konut yıllık reel -%3,4).
@@ -1421,6 +1496,8 @@ CEVABINI SADECE GEÇERLİ BİR JSON OLARAK VER, başka hiçbir şey yazma:
       advisorId: state.advisor.id,
       rawDescription: desc,
       photos: state.newPhotos,
+      manualComps: manualComps,
+      musteri: (chat.musteri && !/^(geç|gec|yok|hayır|hayir|-)$/i.test(chat.musteri.trim())) ? chat.musteri.trim() : "",
       ...parsed
     };
 
@@ -1484,6 +1561,7 @@ function renderResult() {
         <button onclick="startPresentation()" class="btn-primary" style="padding: 14px; font-size: 14px; justify-content: center;">🎥 Sunumu Aç</button>
         <button onclick="exportPPTX()" id="export-pptx" class="btn-secondary" style="padding: 14px; font-size: 14px; justify-content: center;">📥 PowerPoint İndir</button>
         <button onclick="exportPDF()" id="export-pdf" class="btn-secondary" style="padding: 14px; font-size: 14px; justify-content: center;">📄 PDF İndir</button>
+        <button onclick="openInNotebookLM()" id="btn-notebooklm" class="btn-secondary" style="padding: 14px; font-size: 14px; justify-content: center;">📓 NotebookLM'de Sunum</button>
       </div>
     </div>
 
@@ -2403,6 +2481,55 @@ async function exportPDF() {
   }
   btn.disabled = false;
   btn.innerHTML = "📄 PDF İndir";
+}
+
+// ============ NOTEBOOKLM'DE SUNUM ============
+// NotebookLM'in herkese açık API'si yok; PDF'i otomatik yükleyemeyiz.
+// Bu yüzden: (1) raporun PDF'ini indir, (2) NotebookLM'i yeni sekmede aç,
+// (3) kullanıcıya 3 adımlık kısa yönergeyi göster. Yarı otomatik ama pratik.
+async function openInNotebookLM() {
+  const btn = document.getElementById("btn-notebooklm");
+  btn.disabled = true;
+  btn.innerHTML = "⏳ PDF hazırlanıyor...";
+  try {
+    // 1) Raporu PDF olarak indir (NotebookLM'e yüklenecek kaynak)
+    await generatePDF(state.currentReport, state.advisor);
+  } catch (e) {
+    alert("PDF hazırlanamadı: " + e.message);
+    btn.disabled = false;
+    btn.innerHTML = "📓 NotebookLM'de Sunum";
+    return;
+  }
+  // 2) NotebookLM'i yeni sekmede aç
+  window.open("https://notebooklm.google.com/", "_blank");
+  // 3) Kısa yönerge göster
+  showNotebookLMHelp();
+  btn.disabled = false;
+  btn.innerHTML = "📓 NotebookLM'de Sunum";
+}
+
+function showNotebookLMHelp() {
+  const modal = document.createElement("div");
+  modal.id = "nlm-modal";
+  modal.style.cssText = "position:fixed;inset:0;background:rgba(10,12,18,0.82);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;";
+  modal.innerHTML = `
+    <div style="background:var(--panel,#141821);border:1px solid rgba(201,169,97,0.25);border-radius:18px;max-width:440px;width:100%;padding:28px;font-family:inherit;">
+      <div style="font-size:11px;letter-spacing:3px;color:var(--gold,#C9A961);text-transform:uppercase;font-weight:700;margin-bottom:6px;">📓 NotebookLM ile Sunum</div>
+      <div style="font-size:20px;font-weight:700;color:var(--text-light,#F4F6FA);margin-bottom:16px;">3 adımda hazır</div>
+      <p style="font-size:13px;color:#C4CAD6;line-height:1.7;margin:0 0 8px;">✅ Rapor PDF'i <b>indirildi</b> (İndirilenler klasöründe).</p>
+      <p style="font-size:13px;color:#C4CAD6;line-height:1.7;margin:0 0 8px;">✅ NotebookLM <b>yeni sekmede açıldı</b>.</p>
+      <div style="border-top:1px solid rgba(255,255,255,0.08);margin:16px 0;"></div>
+      <ol style="font-size:13px;color:#C4CAD6;line-height:1.9;margin:0;padding-left:20px;">
+        <li>NotebookLM'de <b>"Yeni not defteri"</b> oluştur</li>
+        <li>İndirilen <b>PDF'i sürükle-bırak</b> (veya "Kaynak ekle")</li>
+        <li>Sağdaki <b>Studio</b> panelinden <b>"Slayt Destesi / Sunum"</b>a tıkla → hazır ✨</li>
+      </ol>
+      <p style="font-size:11px;color:var(--text-muted,#7A8290);line-height:1.6;margin:16px 0 0;">İlk kullanımda Google hesabınla giriş istenebilir. Sunum İngilizce çıkarsa, oluşturmadan önce dil olarak Türkçe seçebilirsin.</p>
+      <button onclick="document.getElementById('nlm-modal').remove()" class="btn-primary" style="width:100%;padding:12px;justify-content:center;margin-top:20px;">Anladım</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
 }
 
 async function generatePDF(r, a) {
