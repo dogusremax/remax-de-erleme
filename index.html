@@ -1328,7 +1328,8 @@ CEVABINI SADECE GEÇERLİ BİR JSON OLARAK VER, başka hiçbir şey yazma:
 
 İstanbul piyasasına uygun rakamlar kullan. Acıbadem/Üsküdar/Kadıköy 80-250K TL/m². valueFactors 4-6 adet, comparables 4-6 adet.`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    // Anahtar başlıkla gönderilir (x-goog-api-key): hem eski AIzaSy hem yeni AQ. formatı çalışır
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
 
     // Otomatik tekrar deneme: 503 (yoğunluk) veya 429 (rate limit) hatalarında 3 kez dene
     let response;
@@ -1341,7 +1342,7 @@ CEVABINI SADECE GEÇERLİ BİR JSON OLARAK VER, başka hiçbir şey yazma:
       }
       response = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
@@ -1826,10 +1827,10 @@ async function testApiKey() {
   }
   result.innerHTML = '<span style="color: var(--gold);">⏳ Test ediliyor...</span>';
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
     const r = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify({
         contents: [{ parts: [{ text: "Merhaba" }] }],
         generationConfig: { maxOutputTokens: 10 }
