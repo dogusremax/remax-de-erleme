@@ -1404,25 +1404,35 @@ CEVABINI SADECE GEÇERLİ BİR JSON OLARAK VER, başka hiçbir şey yazma:
 İstanbul piyasasına uygun rakamlar kullan. Acıbadem/Üsküdar/Kadıköy 80-250K TL/m². valueFactors 4-6 adet, comparables 4-6 adet.`;
 
     // Anahtar başlıkla gönderilir (x-goog-api-key): hem eski AIzaSy hem yeni AQ. formatı çalışır
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`;
+    const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-    // Otomatik tekrar deneme: 503 (yoğunluk) veya 429 (rate limit) hatalarında 3 kez dene
+    // Otomatik tekrar deneme: 503 (yoğunluk) / 429 (rate limit) hatalarında 5 deneme.
+    // Bekleme süresi kademeli artar; son iki denemede daha az yoğun olan
+    // flash-lite modeline düşer. Toplam bekleme ~44 saniye.
+    const RETRY_PLAN = [
+      { model: "gemini-flash-latest",      wait: 0 },
+      { model: "gemini-flash-latest",      wait: 2000 },
+      { model: "gemini-flash-latest",      wait: 5000 },
+      { model: "gemini-flash-lite-latest", wait: 12000 },
+      { model: "gemini-flash-lite-latest", wait: 25000 }
+    ];
+
     let response;
     let lastError;
-    const maxRetries = 3;
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      if (attempt > 1) {
-        setProgress(`Doğuş bir kez daha deniyor... (${attempt}. deneme)`);
-        await sleep(2500); // 2.5 saniye bekle
+    for (let attempt = 1; attempt <= RETRY_PLAN.length; attempt++) {
+      const step = RETRY_PLAN[attempt - 1];
+      if (step.wait > 0) {
+        setProgress(`Google yoğun, Doğuş tekrar deniyor... (${attempt}/${RETRY_PLAN.length})`);
+        await sleep(step.wait);
       }
-      response = await fetch(url, {
+      response = await fetch(API_BASE + step.model + ":generateContent", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.4,
-            maxOutputTokens: 8000,
+            maxOutputTokens: 5000,
             responseMimeType: "application/json"
           }
         })
@@ -1434,14 +1444,14 @@ CEVABINI SADECE GEÇERLİ BİR JSON OLARAK VER, başka hiçbir şey yazma:
         break; // Geçici olmayan hata, denemeye devam etme
       }
       lastError = response.status;
-      console.warn(`API ${response.status} hatası, ${attempt}/${maxRetries} deneme`);
+      console.warn(`API ${response.status} hatası — ${step.model}, ${attempt}/${RETRY_PLAN.length} deneme`);
     }
 
     if (!response.ok) {
       const errText = await response.text();
       // Anlaşılır Türkçe hata mesajları
       if (response.status === 503) {
-        throw new Error("Google'ın sunucuları şu an çok yoğun. 1-2 dakika sonra tekrar deneyin. (Bu geçici bir durumdur, kotanız değil)");
+        throw new Error("Google'ın sunucuları şu an çok yoğun. 5 deneme yapıldı, hepsi doldu. 2-3 dakika sonra tekrar deneyin. (Bu geçici bir durumdur, kotanız değil)");
       }
       if (response.status === 429) {
         throw new Error("Günlük kota doldu. Yarın sabah 10:00'da sıfırlanacak veya yöneticiniz prepay yatırarak çözebilir.");
